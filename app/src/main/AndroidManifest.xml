@@ -34,6 +34,7 @@
 
         <receiver android:name=".TaskAlarmReceiver" />
 
+        <activity android:name=".category_input"></activity>
     </application>
 
 </manifest>
