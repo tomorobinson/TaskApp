@@ -64,7 +64,7 @@ public class InputActivity extends AppCompatActivity {
 
     private View.OnClickListener mOnDoneClickListener = new View.OnClickListener() {
         @Override
-        public void onClick(View v) {
+        public void onClick(View v){
             addTask();
             finish();
         }
