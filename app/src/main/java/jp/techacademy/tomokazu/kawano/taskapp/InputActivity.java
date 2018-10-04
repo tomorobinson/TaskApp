@@ -9,9 +9,12 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TimePicker;
 
 import java.util.Calendar;
@@ -20,13 +23,37 @@ import java.util.GregorianCalendar;
 
 import io.realm.Realm;
 import io.realm.RealmResults;
+import io.realm.Sort;
 
 public class InputActivity extends AppCompatActivity {
 
+    public final static String EXTRA_CATEGORY = "categoryId";
     private int mYear, mMonth, mDay, mHour, mMinute;
     private Button mDateButton, mTimeButton;
-    private EditText mTitleEdit, mContentEdit, mCategoryEdit;
+    private EditText mTitleEdit, mContentEdit;
     private Task mTask;
+    private Category mCategory;
+    private CategoryAdapter mCategoryAdapter;
+    private Spinner mCategorySpinner;
+
+    private AdapterView.OnClickListener mCategoryCreateClickListener = new AdapterView.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+
+            mCategory = new Category();
+
+            if (mTask != null) {
+                // 入力・編集する画面へ遷移
+                Intent intent = new Intent(InputActivity.this, InputCategory.class);
+                intent.putExtra(EXTRA_CATEGORY, mTask.getCategoryId());
+                startActivity(intent);
+            } else {
+                Intent intent = new Intent(InputActivity.this, InputCategory.class);
+                startActivity(intent);
+            }
+        }
+    };
+
     private View.OnClickListener mOnDateClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -37,7 +64,7 @@ public class InputActivity extends AppCompatActivity {
                             mYear = year;
                             mMonth = monthOfYear;
                             mDay = dayOfMonth;
-                            String dateString = mYear + "/" + String.format("%02d",(mMonth + 1)) + "/" + String.format("%02d", mDay);
+                            String dateString = mYear + "/" + String.format("%02d", (mMonth + 1)) + "/" + String.format("%02d", mDay);
                             mDateButton.setText(dateString);
                         }
                     }, mYear, mMonth, mDay);
@@ -64,7 +91,7 @@ public class InputActivity extends AppCompatActivity {
 
     private View.OnClickListener mOnDoneClickListener = new View.OnClickListener() {
         @Override
-        public void onClick(View v){
+        public void onClick(View v) {
             addTask();
             finish();
         }
@@ -83,16 +110,19 @@ public class InputActivity extends AppCompatActivity {
         }
 
         // UI部品の設定
-        mDateButton = (Button)findViewById(R.id.date_button);
+        mDateButton = (Button) findViewById(R.id.date_button);
         mDateButton.setOnClickListener(mOnDateClickListener);
 
-        mTimeButton = (Button)findViewById(R.id.times_button);
+        mTimeButton = (Button) findViewById(R.id.times_button);
         mTimeButton.setOnClickListener(mOnTimeClickListener);
+        findViewById(R.id.category_create_button).setOnClickListener(mCategoryCreateClickListener);
         findViewById(R.id.done_button).setOnClickListener(mOnDoneClickListener);
 
-        mTitleEdit = (EditText)findViewById(R.id.title_edit_text);
-        mContentEdit = (EditText)findViewById(R.id.content_edit_text);
-        mCategoryEdit = (EditText)findViewById(R.id.category_edit_text);
+        mTitleEdit = (EditText) findViewById(R.id.title_edit_text);
+        mContentEdit = (EditText) findViewById(R.id.content_edit_text);
+        mCategorySpinner = (Spinner) findViewById(R.id.category_spinner);
+        mCategoryAdapter = new CategoryAdapter(InputActivity.this);
+
 
         // EXTRA_TASK から Task の id を取得して、 id から Task のインスタンスを取得する
         Intent intent = getIntent();
@@ -113,8 +143,13 @@ public class InputActivity extends AppCompatActivity {
             // 更新の場合
             mTitleEdit.setText(mTask.getTitle());
             mContentEdit.setText(mTask.getContents());
-            mCategoryEdit.setText(mTask.getCategory());
+            if (mCategorySpinner != null) {
+                String item = (String) mCategorySpinner.getSelectedItem();
+                mTask.setCategory(item);
 
+                int position = mCategorySpinner.getSelectedItemPosition();
+                mTask.setCategoryId(position);
+            }
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(mTask.getDate());
             mYear = calendar.get(Calendar.YEAR);
@@ -123,7 +158,7 @@ public class InputActivity extends AppCompatActivity {
             mHour = calendar.get(Calendar.HOUR_OF_DAY);
             mMinute = calendar.get(Calendar.MINUTE);
 
-            String dateString = mYear + "/" + String.format("%02d",(mMonth + 1)) + "/" + String.format("%02d", mDay);
+            String dateString = mYear + "/" + String.format("%02d", (mMonth + 1)) + "/" + String.format("%02d", mDay);
             String timeString = String.format("%02d", mHour) + ":" + String.format("%02d", mMinute);
             mDateButton.setText(dateString);
             mTimeButton.setText(timeString);
@@ -152,12 +187,18 @@ public class InputActivity extends AppCompatActivity {
 
         String title = mTitleEdit.getText().toString();
         String content = mContentEdit.getText().toString();
-        String category = mCategoryEdit.getText().toString();
 
         mTask.setTitle(title);
         mTask.setContents(content);
-        mTask.setCategory(category);
-        GregorianCalendar calendar = new GregorianCalendar(mYear,mMonth,mDay,mHour,mMinute);
+
+        if (mCategorySpinner != null) {
+            String item = (String) mCategorySpinner.getSelectedItem();
+            mTask.setCategory(item);
+
+            int position = mCategorySpinner.getSelectedItemPosition();
+            mTask.setCategoryId(position);
+        }
+        GregorianCalendar calendar = new GregorianCalendar(mYear, mMonth, mDay, mHour, mMinute);
         Date date = calendar.getTime();
         mTask.setDate(date);
 
@@ -177,5 +218,16 @@ public class InputActivity extends AppCompatActivity {
 
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
         alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), resultPendingIntent);
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+        if (mCategory != null) {
+            // CategoryのSpinner用のアダプタに渡す
+            mCategorySpinner.setAdapter(mCategoryAdapter);
+            // 表示を更新するために、アダプターにデータが変更されたことを知らせる
+            mCategoryAdapter.notifyDataSetChanged();
+        }
     }
 }

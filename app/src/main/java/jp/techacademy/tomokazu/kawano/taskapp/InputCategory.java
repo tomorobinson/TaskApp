@@ -23,13 +23,12 @@ public class InputCategory extends AppCompatActivity {
 
         // UI部品の設定
         findViewById(R.id.createButton).setOnClickListener(mCreateClickListener);
-        categoryEditText = (EditText) findViewById(R.id.category_edit_text);
+        categoryEditText = (EditText) findViewById(R.id.categoryEditText);
 
-        // EXTRA_TASK から Task の id を取得して、 id から Task のインスタンスを取得する
         Intent intent = getIntent();
-        int taskId = intent.getIntExtra(MainActivity.EXTRA_TASK, -1);
         Realm realm = Realm.getDefaultInstance();
-        mCategory = realm.where(Category.class).equalTo("id", taskId).findFirst();
+        int categoryId = intent.getIntExtra(InputActivity.EXTRA_CATEGORY, -1);
+        mCategory = realm.where(Category.class).equalTo("id", categoryId).findFirst();
         realm.close();
     }
 
@@ -50,11 +49,11 @@ public class InputCategory extends AppCompatActivity {
             // 新規作成の場合
             mCategory = new Category();
 
-            RealmResults<Task> taskRealmResults = realm.where(Task.class).findAll();
+            RealmResults<Category> categoryRealmResults = realm.where(Category.class).findAll();
 
             int identifier;
-            if (taskRealmResults.max("id") != null) {
-                identifier = taskRealmResults.max("id").intValue() + 1;
+            if (categoryRealmResults.max("id") != null) {
+                identifier = categoryRealmResults.max("id").intValue() + 1;
             } else {
                 identifier = 0;
             }
@@ -63,9 +62,5 @@ public class InputCategory extends AppCompatActivity {
 
         String category = categoryEditText.getText().toString();
         mCategory.setCategory(category);
-
-        Intent intent = new Intent(InputCategory.this, InputActivity.class);
-        intent.putExtra(MainActivity.EXTRA_TASK, mCategory.getId());
-        startActivity(intent);
     }
 }

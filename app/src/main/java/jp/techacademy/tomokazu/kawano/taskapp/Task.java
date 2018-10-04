@@ -1,5 +1,7 @@
 package jp.techacademy.tomokazu.kawano.taskapp;
 
+import android.widget.Spinner;
+
 import java.io.Serializable;
 import java.util.Date;
 
@@ -10,6 +12,7 @@ public class Task extends RealmObject implements Serializable {
     private String title; // タイトル
     private String contents; // 内容
     private String category; // カテゴリー
+    private int categoryId; // カテゴリークラスのID
     private Date date; // 日時
 
     // idをプライマリキーとして設定
@@ -55,4 +58,13 @@ public class Task extends RealmObject implements Serializable {
     public void setCategory(String category) {
         this.category = category;
     }
+
+    public int getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(int categoryId) {
+        this.categoryId = categoryId;
+    }
+
 }

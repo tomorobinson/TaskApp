@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
@@ -53,6 +54,9 @@ public class TaskAdapter extends BaseAdapter {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.JAPANESE);
         Date date = mTaskList.get(position).getDate();
         textView2.setText(simpleDateFormat.format(date));
+
+        String categorySpinner = mTaskList.get(position).getCategory();
+        int categoryID = mTaskList.get(position).getCategoryId();
 
         return convertView;
     }

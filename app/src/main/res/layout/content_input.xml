@@ -25,26 +25,35 @@
         android:layout_below="@id/title_edit_text"
         android:hint="内容" />
 
-    <Spinner
-        android:id="@+id/category_spinner"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/content_edit_text"/>
-<!--
-    <EditText
-        android:id="@+id/category_edit_text"
+    <LinearLayout
+        android:id="@+id/categorySection"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/content_edit_text"
-        android:hint="カテゴリ" />
--->
+        android:orientation="horizontal">
+
+        <Spinner
+            android:id="@+id/category_spinner"
+            android:layout_width="0sp"
+            android:layout_height="match_parent"
+            android:layout_weight="6"
+            android:spinnerMode="dialog"/>
+
+        <Button
+            android:id="@+id/category_create_button"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="4"
+            android:text="カテゴリ新規作成" />
+
+    </LinearLayout>
 
     <Button
         android:id="@+id/date_button"
         style="@style/Widget.AppCompat.Button.Borderless"
-        android:layout_width="0dp"
+        android:layout_width="96dp"
         android:layout_height="wrap_content"
-        android:layout_below="@id/category_spinner"
+        android:layout_below="@id/categorySection"
         android:layout_alignParentStart="true"
         android:layout_toLeftOf="@+id/times_button"
         android:text="----/--/--" />
@@ -54,7 +63,7 @@
         style="@style/Widget.AppCompat.Button.Borderless"
         android:layout_width="96dp"
         android:layout_height="wrap_content"
-        android:layout_below="@id/category_spinner"
+        android:layout_below="@id/categorySection"
         android:layout_alignParentRight="true"
         android:text="--:--" />
 

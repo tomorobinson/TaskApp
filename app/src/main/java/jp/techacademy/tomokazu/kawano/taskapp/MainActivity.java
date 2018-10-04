@@ -13,6 +13,8 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Spinner;
+
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
@@ -31,7 +33,8 @@ public class MainActivity extends AppCompatActivity {
 
     private ListView mListView;
     private TaskAdapter mTaskAdapter;
-    private EditText mEditText;
+    private CategoryAdapter mCategoryAdapter;
+    private Spinner mCategorySpinner;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,18 +54,9 @@ public class MainActivity extends AppCompatActivity {
         mRealm = Realm.getDefaultInstance();
         mRealm.addChangeListener(mRealmListener);
 
-        // EditTextの設定
-        mEditText = (EditText) findViewById(R.id.search_edit_text);
-
-        // Searchボタンの設定
-        Button mButton = (Button) findViewById(R.id.searchButton);
-        // Searchボタンを押した時の設定
-        mButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                reloadListView();
-            }
-        });
+        // Spinnerの設定
+        mCategoryAdapter = new CategoryAdapter(MainActivity.this);
+        mCategorySpinner = (Spinner) findViewById(R.id.spinner);
 
         // ListViewの設定
         mTaskAdapter = new TaskAdapter(MainActivity.this);
@@ -133,11 +127,14 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    protected void onResume() {
+        super.onResume();
+        reloadListView();
+    }
+
     private void reloadListView() {
 
-        String category = mEditText.getText().toString().trim(); // Editableから文字列に変換、余分な空白は削除
-
-        if (category.equals("")){
+        if (mCategorySpinner == null) {
             // category未入力の場合、Realmデータベースから、「全てのデータを取得して新しい日時順に並べた結果」を取得
             RealmResults<Task> taskRealmResultsAll = mRealm.where(Task.class).sort("date", Sort.DESCENDING).findAll();
             // 上記の結果を、TaskList としてセットする
@@ -145,7 +142,13 @@ public class MainActivity extends AppCompatActivity {
 
         } else {
             // category入力有りの場合、該当データをフィルタリング
-            RealmResults<Task> taskRealmResultsFiltered = mRealm.where(Task.class).equalTo("category", category).sort("date", Sort.DESCENDING).findAll();
+            String item = (String) mCategorySpinner.getSelectedItem();
+            // CategoryのSpinner用のアダプタに渡す
+            mCategorySpinner.setAdapter(mCategoryAdapter);
+            // 表示を更新するために、アダプターにデータが変更されたことを知らせる
+            mCategoryAdapter.notifyDataSetChanged();
+
+            RealmResults<Task> taskRealmResultsFiltered = mRealm.where(Task.class).equalTo("category", item).sort("date", Sort.DESCENDING).findAll();
             // 上記の結果を、TaskList としてセットする
             mTaskAdapter.setTaskList(mRealm.copyFromRealm(taskRealmResultsFiltered));
         }
