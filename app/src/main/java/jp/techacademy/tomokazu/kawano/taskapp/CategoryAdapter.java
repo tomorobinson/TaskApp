@@ -7,9 +7,11 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.List;
 
 
 public class CategoryAdapter extends ArrayAdapter<Category> {
+    private List<Category> mCategoryList;
 
     public CategoryAdapter(Context context){
         super(context, android.R.layout.simple_spinner_item);
@@ -34,6 +36,11 @@ public class CategoryAdapter extends ArrayAdapter<Category> {
         textView.setText(getItem(position).getCategory());
         return textView;
     }
+
+    public void setCategoryList(List<Category> categoryList) {
+        mCategoryList = categoryList;
+    }
+
 
 
 }

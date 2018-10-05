@@ -1,5 +1,7 @@
 package jp.techacademy.tomokazu.kawano.taskapp;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -7,6 +9,8 @@ import android.text.Editable;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+
+import java.util.Calendar;
 
 import io.realm.Realm;
 import io.realm.RealmResults;
@@ -62,5 +66,10 @@ public class InputCategory extends AppCompatActivity {
 
         String category = categoryEditText.getText().toString();
         mCategory.setCategory(category);
+
+        realm.copyToRealmOrUpdate(mCategory);
+        realm.commitTransaction();
+
+        realm.close();
     }
 }

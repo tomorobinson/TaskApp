@@ -27,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
     private RealmChangeListener mRealmListener = new RealmChangeListener() {
         @Override
         public void onChange(Object element) {
+            reloadSpinner();
             reloadListView();
         }
     };
@@ -123,12 +124,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        reloadSpinner();
         reloadListView();
 
     }
 
     protected void onResume() {
         super.onResume();
+        reloadSpinner();
         reloadListView();
     }
 
@@ -158,6 +161,19 @@ public class MainActivity extends AppCompatActivity {
         // 表示を更新するために、アダプターにデータが変更されたことを知らせる
         mTaskAdapter.notifyDataSetChanged();
     }
+
+    private void reloadSpinner() {
+        // category未入力の場合、Realmデータベースから、「全てのデータを取得してcategoryを昇順にソートした結果」を取得
+        RealmResults<Category> categoryRealmResults = mRealm.where(Category.class).sort("category", Sort.ASCENDING).findAll();
+        // 上記の結果を、CategoryList としてセットする
+        mCategoryAdapter.setCategoryList(mRealm.copyFromRealm(categoryRealmResults));
+
+        // CategoryのSpinner用のアダプタに渡す
+        mCategorySpinner.setAdapter(mCategoryAdapter);
+        // 表示を更新するために、アダプターにデータが変更されたことを知らせる
+        mCategoryAdapter.notifyDataSetChanged();
+    }
+
 
     @Override
     protected void onDestroy() {

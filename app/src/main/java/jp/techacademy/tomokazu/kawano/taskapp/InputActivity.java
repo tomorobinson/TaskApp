@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 
 import io.realm.Realm;
+import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
 import io.realm.Sort;
 
@@ -35,14 +36,20 @@ public class InputActivity extends AppCompatActivity {
     private Category mCategory;
     private CategoryAdapter mCategoryAdapter;
     private Spinner mCategorySpinner;
+    private Realm mRealm;
+    private RealmChangeListener mRealmListener = new RealmChangeListener() {
+        @Override
+        public void onChange(Object element) {
+            reloadSpinner();
+        }
+    };
+
 
     private AdapterView.OnClickListener mCategoryCreateClickListener = new AdapterView.OnClickListener() {
         @Override
         public void onClick(View v) {
 
-            mCategory = new Category();
-
-            if (mTask != null) {
+            if (mCategorySpinner != null) {
                 // 入力・編集する画面へ遷移
                 Intent intent = new Intent(InputActivity.this, InputCategory.class);
                 intent.putExtra(EXTRA_CATEGORY, mTask.getCategoryId());
@@ -109,6 +116,10 @@ public class InputActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
+        // Realmの設定
+        mRealm = Realm.getDefaultInstance();
+        mRealm.addChangeListener(mRealmListener);
+
         // UI部品の設定
         mDateButton = (Button) findViewById(R.id.date_button);
         mDateButton.setOnClickListener(mOnDateClickListener);
@@ -139,6 +150,13 @@ public class InputActivity extends AppCompatActivity {
             mDay = calendar.get(Calendar.DAY_OF_MONTH);
             mHour = calendar.get(Calendar.HOUR_OF_DAY);
             mMinute = calendar.get(Calendar.MINUTE);
+            if (mCategorySpinner != null) {
+                String item = (String) mCategorySpinner.getSelectedItem();
+                mTask.setCategory(item);
+
+                int position = mCategorySpinner.getSelectedItemPosition();
+                mTask.setCategoryId(position);
+            }
         } else {
             // 更新の場合
             mTitleEdit.setText(mTask.getTitle());
@@ -221,13 +239,20 @@ public class InputActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onResume(){
+    protected void onResume() {
         super.onResume();
-        if (mCategory != null) {
+        reloadSpinner();
+    }
+
+    private void reloadSpinner() {
+            // category未入力の場合、Realmデータベースから、「全てのデータを取得してcategoryを昇順にソートした結果」を取得
+            RealmResults<Category> categoryRealmResults = mRealm.where(Category.class).findAll().sort("category", Sort.ASCENDING);
+            // 上記の結果を、CategoryList としてセットする
+            mCategoryAdapter.setCategoryList(mRealm.copyFromRealm(categoryRealmResults));
+
             // CategoryのSpinner用のアダプタに渡す
             mCategorySpinner.setAdapter(mCategoryAdapter);
             // 表示を更新するために、アダプターにデータが変更されたことを知らせる
             mCategoryAdapter.notifyDataSetChanged();
         }
     }
-}
