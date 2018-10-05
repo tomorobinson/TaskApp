@@ -50,9 +50,12 @@ public class InputActivity extends AppCompatActivity {
         public void onClick(View v) {
 
             if (mCategorySpinner != null) {
+
+                int position = mCategorySpinner.getSelectedItemPosition();
+
                 // 入力・編集する画面へ遷移
                 Intent intent = new Intent(InputActivity.this, InputCategory.class);
-                intent.putExtra(EXTRA_CATEGORY, mTask.getCategoryId());
+                intent.putExtra(EXTRA_CATEGORY, position);
                 startActivity(intent);
             } else {
                 Intent intent = new Intent(InputActivity.this, InputCategory.class);
@@ -150,13 +153,6 @@ public class InputActivity extends AppCompatActivity {
             mDay = calendar.get(Calendar.DAY_OF_MONTH);
             mHour = calendar.get(Calendar.HOUR_OF_DAY);
             mMinute = calendar.get(Calendar.MINUTE);
-            if (mCategorySpinner != null) {
-                String item = (String) mCategorySpinner.getSelectedItem();
-                mTask.setCategory(item);
-
-                int position = mCategorySpinner.getSelectedItemPosition();
-                mTask.setCategoryId(position);
-            }
         } else {
             // 更新の場合
             mTitleEdit.setText(mTask.getTitle());
@@ -210,7 +206,7 @@ public class InputActivity extends AppCompatActivity {
         mTask.setContents(content);
 
         if (mCategorySpinner != null) {
-            String item = (String) mCategorySpinner.getSelectedItem();
+            String item = (String) mCategorySpinner.getSelectedItem().toString();
             mTask.setCategory(item);
 
             int position = mCategorySpinner.getSelectedItemPosition();
@@ -241,7 +237,9 @@ public class InputActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        reloadSpinner();
+        if (mTask != null){
+            reloadSpinner();
+        }
     }
 
     private void reloadSpinner() {
@@ -254,5 +252,5 @@ public class InputActivity extends AppCompatActivity {
             mCategorySpinner.setAdapter(mCategoryAdapter);
             // 表示を更新するために、アダプターにデータが変更されたことを知らせる
             mCategoryAdapter.notifyDataSetChanged();
-        }
     }
+}

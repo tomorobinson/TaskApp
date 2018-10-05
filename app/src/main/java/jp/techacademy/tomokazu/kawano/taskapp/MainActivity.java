@@ -10,10 +10,9 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.AdapterView.OnItemSelectedListener;
 
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
@@ -136,42 +135,53 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void reloadListView() {
+        // Spinnerを選択した時の設定
+        mCategorySpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 
-        if (mCategorySpinner == null) {
-            // category未入力の場合、Realmデータベースから、「全てのデータを取得して新しい日時順に並べた結果」を取得
-            RealmResults<Task> taskRealmResultsAll = mRealm.where(Task.class).sort("date", Sort.DESCENDING).findAll();
-            // 上記の結果を、TaskList としてセットする
-            mTaskAdapter.setTaskList(mRealm.copyFromRealm(taskRealmResultsAll));
+                if (mCategorySpinner == null) {
+                    // category未入力の場合、Realmデータベースから、「全てのデータを取得して新しい日時順に並べた結果」を取得
+                    RealmResults<Task> taskRealmResultsAll = mRealm.where(Task.class).sort("date", Sort.DESCENDING).findAll();
+                    // 上記の結果を、TaskList としてセットする
+                    mTaskAdapter.setTaskList(mRealm.copyFromRealm(taskRealmResultsAll));
 
-        } else {
-            // category入力有りの場合、該当データをフィルタリング
-            String item = (String) mCategorySpinner.getSelectedItem();
-            // CategoryのSpinner用のアダプタに渡す
-            mCategorySpinner.setAdapter(mCategoryAdapter);
-            // 表示を更新するために、アダプターにデータが変更されたことを知らせる
-            mCategoryAdapter.notifyDataSetChanged();
+                } else {
+                    // category入力有りの場合、該当データをフィルタリング
+                    String item = (String) mCategorySpinner.getSelectedItem().toString();
+                    // CategoryのSpinner用のアダプタに渡す
+                    mCategorySpinner.setAdapter(mCategoryAdapter);
+                    // 表示を更新するために、アダプターにデータが変更されたことを知らせる
+                    mCategoryAdapter.notifyDataSetChanged();
 
-            RealmResults<Task> taskRealmResultsFiltered = mRealm.where(Task.class).equalTo("category", item).sort("date", Sort.DESCENDING).findAll();
-            // 上記の結果を、TaskList としてセットする
-            mTaskAdapter.setTaskList(mRealm.copyFromRealm(taskRealmResultsFiltered));
-        }
+                    RealmResults<Task> taskRealmResultsFiltered = mRealm.where(Task.class).equalTo("category", item).sort("date", Sort.DESCENDING).findAll();
+                    // 上記の結果を、TaskList としてセットする
+                    mTaskAdapter.setTaskList(mRealm.copyFromRealm(taskRealmResultsFiltered));
+                }
 
-        // TaskのListView用のアダプタに渡す
-        mListView.setAdapter(mTaskAdapter);
-        // 表示を更新するために、アダプターにデータが変更されたことを知らせる
-        mTaskAdapter.notifyDataSetChanged();
+                // TaskのListView用のアダプタに渡す
+                mListView.setAdapter(mTaskAdapter);
+                // 表示を更新するために、アダプターにデータが変更されたことを知らせる
+                mTaskAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
     }
 
     private void reloadSpinner() {
-        // category未入力の場合、Realmデータベースから、「全てのデータを取得してcategoryを昇順にソートした結果」を取得
-        RealmResults<Category> categoryRealmResults = mRealm.where(Category.class).sort("category", Sort.ASCENDING).findAll();
-        // 上記の結果を、CategoryList としてセットする
-        mCategoryAdapter.setCategoryList(mRealm.copyFromRealm(categoryRealmResults));
+                // category未入力の場合、Realmデータベースから、「全てのデータを取得してcategoryを昇順にソートした結果」を取得
+                RealmResults<Category> categoryRealmResults = mRealm.where(Category.class).sort("category", Sort.ASCENDING).findAll();
+                // 上記の結果を、CategoryList としてセットする
+                mCategoryAdapter.setCategoryList(mRealm.copyFromRealm(categoryRealmResults));
 
-        // CategoryのSpinner用のアダプタに渡す
-        mCategorySpinner.setAdapter(mCategoryAdapter);
-        // 表示を更新するために、アダプターにデータが変更されたことを知らせる
-        mCategoryAdapter.notifyDataSetChanged();
+                // CategoryのSpinner用のアダプタに渡す
+                mCategorySpinner.setAdapter(mCategoryAdapter);
+                // 表示を更新するために、アダプターにデータが変更されたことを知らせる
+                mCategoryAdapter.notifyDataSetChanged();
     }
 
 
