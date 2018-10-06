@@ -38,7 +38,7 @@ public class InputActivity extends AppCompatActivity {
     private int mCategoryId;
     private CategoryAdapter mCategoryAdapter;
     private Spinner mCategorySpinner;
-    private Realm mRealm;
+    private Realm mRealm, mRealm1;
     private RealmChangeListener mRealmListener = new RealmChangeListener() {
         @Override
         public void onChange(Object element) {
@@ -149,10 +149,11 @@ public class InputActivity extends AppCompatActivity {
             mTitleEdit.setText(mTask.getTitle());
             mContentEdit.setText(mTask.getContents());
 
-/*
-            Category mCategory = (Category) mCategorySpinner.getSelectedItem();
-            mCategoryId = mCategory.getId();
-*/
+            Realm realm1 = Realm.getDefaultInstance();
+            mCategory = realm1.where(Category.class).equalTo("id", mCategoryId).findFirst();
+            mCategorySpinner.setSelection(mCategory.getId());
+            realm.close();
+
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(mTask.getDate());
             mYear = calendar.get(Calendar.YEAR);
@@ -197,6 +198,7 @@ public class InputActivity extends AppCompatActivity {
         try {
             Category item = (Category) mCategorySpinner.getSelectedItem();
             mTask.setCategoryId(item.getId());
+            mCategorySpinner.setSelection(mCategory.getId());
         } catch (Exception e){
             Log.d("NOCATEGORY", e.toString());
         }
