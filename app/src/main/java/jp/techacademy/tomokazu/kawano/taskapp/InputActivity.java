@@ -34,6 +34,7 @@ public class InputActivity extends AppCompatActivity {
     private EditText mTitleEdit, mContentEdit;
     private Task mTask;
     private Category mCategory;
+    private int mCategoryId;
     private CategoryAdapter mCategoryAdapter;
     private Spinner mCategorySpinner;
     private Realm mRealm;
@@ -48,19 +49,9 @@ public class InputActivity extends AppCompatActivity {
     private AdapterView.OnClickListener mCategoryCreateClickListener = new AdapterView.OnClickListener() {
         @Override
         public void onClick(View v) {
-
-            if (mCategorySpinner != null) {
-
-                int position = mCategorySpinner.getSelectedItemPosition();
-
-                // 入力・編集する画面へ遷移
-                Intent intent = new Intent(InputActivity.this, InputCategory.class);
-                intent.putExtra(EXTRA_CATEGORY, position);
-                startActivity(intent);
-            } else {
-                Intent intent = new Intent(InputActivity.this, InputCategory.class);
-                startActivity(intent);
-            }
+            // 入力・編集する画面へ遷移
+            Intent intent = new Intent(InputActivity.this, InputCategory.class);
+            startActivity(intent);
         }
     };
 
@@ -137,7 +128,6 @@ public class InputActivity extends AppCompatActivity {
         mCategorySpinner = (Spinner) findViewById(R.id.category_spinner);
         mCategoryAdapter = new CategoryAdapter(InputActivity.this);
 
-
         // EXTRA_TASK から Task の id を取得して、 id から Task のインスタンスを取得する
         Intent intent = getIntent();
         int taskId = intent.getIntExtra(MainActivity.EXTRA_TASK, -1);
@@ -157,13 +147,11 @@ public class InputActivity extends AppCompatActivity {
             // 更新の場合
             mTitleEdit.setText(mTask.getTitle());
             mContentEdit.setText(mTask.getContents());
-            if (mCategorySpinner != null) {
-                String item = (String) mCategorySpinner.getSelectedItem();
-                mTask.setCategory(item);
 
-                int position = mCategorySpinner.getSelectedItemPosition();
-                mTask.setCategoryId(position);
-            }
+/*
+            Category mCategory = (Category) mCategorySpinner.getSelectedItem();
+            mCategoryId = mCategory.getId();
+*/
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(mTask.getDate());
             mYear = calendar.get(Calendar.YEAR);
@@ -205,13 +193,9 @@ public class InputActivity extends AppCompatActivity {
         mTask.setTitle(title);
         mTask.setContents(content);
 
-        if (mCategorySpinner != null) {
-            String item = (String) mCategorySpinner.getSelectedItem().toString();
-            mTask.setCategory(item);
+        Category item = (Category) mCategorySpinner.getSelectedItem();
+        mTask.setCategoryId(item.getId());
 
-            int position = mCategorySpinner.getSelectedItemPosition();
-            mTask.setCategoryId(position);
-        }
         GregorianCalendar calendar = new GregorianCalendar(mYear, mMonth, mDay, mHour, mMinute);
         Date date = calendar.getTime();
         mTask.setDate(date);
@@ -237,20 +221,20 @@ public class InputActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (mTask != null){
+        if (mTask != null) {
             reloadSpinner();
         }
     }
 
     private void reloadSpinner() {
-            // category未入力の場合、Realmデータベースから、「全てのデータを取得してcategoryを昇順にソートした結果」を取得
-            RealmResults<Category> categoryRealmResults = mRealm.where(Category.class).findAll().sort("category", Sort.ASCENDING);
-            // 上記の結果を、CategoryList としてセットする
-            mCategoryAdapter.setCategoryList(mRealm.copyFromRealm(categoryRealmResults));
+        // category未入力の場合、Realmデータベースから、「全てのデータを取得してcategoryを昇順にソートした結果」を取得
+        RealmResults<Category> categoryRealmResults = mRealm.where(Category.class).findAll().sort("category", Sort.ASCENDING);
+        // 上記の結果を、CategoryList としてセットする
+        mCategoryAdapter.setCategoryList(mRealm.copyFromRealm(categoryRealmResults));
 
-            // CategoryのSpinner用のアダプタに渡す
-            mCategorySpinner.setAdapter(mCategoryAdapter);
-            // 表示を更新するために、アダプターにデータが変更されたことを知らせる
-            mCategoryAdapter.notifyDataSetChanged();
+        // CategoryのSpinner用のアダプタに渡す
+        mCategorySpinner.setAdapter(mCategoryAdapter);
+        // 表示を更新するために、アダプターにデータが変更されたことを知らせる
+        mCategoryAdapter.notifyDataSetChanged();
     }
 }

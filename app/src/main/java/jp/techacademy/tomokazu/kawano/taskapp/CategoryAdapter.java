@@ -22,7 +22,6 @@ public class CategoryAdapter extends BaseAdapter {
         mCategoryList = categoryList;
     }
 
-
     @Override
     public int getCount() {
         return mCategoryList.size();

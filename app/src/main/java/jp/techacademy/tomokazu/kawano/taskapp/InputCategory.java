@@ -1,7 +1,9 @@
 package jp.techacademy.tomokazu.kawano.taskapp;
 
 import android.app.AlarmManager;
+import android.app.AlertDialog;
 import android.app.PendingIntent;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -31,8 +33,7 @@ public class InputCategory extends AppCompatActivity {
 
         Intent intent = getIntent();
         Realm realm = Realm.getDefaultInstance();
-        int categoryId = intent.getIntExtra(InputActivity.EXTRA_CATEGORY, -1);
-        mCategory = realm.where(Category.class).equalTo("id", categoryId).findFirst();
+
         realm.close();
     }
 
@@ -47,29 +48,52 @@ public class InputCategory extends AppCompatActivity {
     private void addCategory() {
         Realm realm = Realm.getDefaultInstance();
 
-        realm.beginTransaction();
-
-        if (mCategory == null) {
-            // 新規作成の場合
-            mCategory = new Category();
-
-            RealmResults<Category> categoryRealmResults = realm.where(Category.class).findAll();
-
-            int identifier;
-            if (categoryRealmResults.max("id") != null) {
-                identifier = categoryRealmResults.max("id").intValue() + 1;
-            } else {
-                identifier = 0;
-            }
-            mCategory.setId(identifier);
-        }
-
         String category = categoryEditText.getText().toString();
-        mCategory.setCategory(category);
 
-        realm.copyToRealmOrUpdate(mCategory);
-        realm.commitTransaction();
+        RealmResults<Category> existingCategory = realm.where(Category.class).equalTo("category", category).findAll();
 
-        realm.close();
+        if (existingCategory.size() == 0) {
+            // カテゴリ名が重複していない場合の設定
+
+            realm.beginTransaction();
+
+            if (mCategory == null) {
+                // 新規作成の場合
+                mCategory = new Category();
+
+                RealmResults<Category> categoryRealmResults = realm.where(Category.class).findAll();
+
+                int identifier;
+
+                if (categoryRealmResults.max("id") != null) {
+                    identifier = categoryRealmResults.max("id").intValue() + 1;
+                } else {
+                    identifier = 0;
+                }
+                mCategory.setId(identifier);
+
+
+                mCategory.setCategory(category);
+
+                realm.copyToRealmOrUpdate(mCategory);
+                realm.commitTransaction();
+                realm.close();
+            }
+
+        } else {
+            AlertDialog.Builder builder = new AlertDialog.Builder(InputCategory.this);
+
+            builder.setTitle("重複");
+            builder.setMessage("このカテゴリ名は既に登録されています。");
+            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+
+                }
+            });
+
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        }
     }
 }

@@ -55,11 +55,6 @@ public class TaskAdapter extends BaseAdapter {
         Date date = mTaskList.get(position).getDate();
         textView2.setText(simpleDateFormat.format(date));
 
-/*
-        String categorySpinner = mTaskList.get(position).getCategory();
-        int categoryID = mTaskList.get(position).getCategoryId();
-*/
-
         return convertView;
     }
 }

@@ -36,7 +36,13 @@
 
         <receiver android:name=".TaskAlarmReceiver" />
 
-        <activity android:name=".InputCategory"></activity>
+        <activity android:name=".InputCategory"
+            android:label="カテゴリ"
+            android:parentActivityName=".InputActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="jp.techacademy.tomokazu.kawano.taskapp.InputActivity" />
+        </activity>
     </application>
 
 </manifest>
