@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -193,8 +194,12 @@ public class InputActivity extends AppCompatActivity {
         mTask.setTitle(title);
         mTask.setContents(content);
 
-        Category item = (Category) mCategorySpinner.getSelectedItem();
-        mTask.setCategoryId(item.getId());
+        try {
+            Category item = (Category) mCategorySpinner.getSelectedItem();
+            mTask.setCategoryId(item.getId());
+        } catch (Exception e){
+            Log.d("NOCATEGORY", e.toString());
+        }
 
         GregorianCalendar calendar = new GregorianCalendar(mYear, mMonth, mDay, mHour, mMinute);
         Date date = calendar.getTime();
