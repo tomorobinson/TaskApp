@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private TaskAdapter mTaskAdapter;
     private CategoryAdapter mCategoryAdapter;
     private Spinner mCategorySpinner;
-    Category item;
+    private Category item;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,7 +62,13 @@ public class MainActivity extends AppCompatActivity {
         mCategorySpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                reloadListView();
+                item = (Category) mCategorySpinner.getSelectedItem();
+
+                // category入力有りの場合、該当データをフィルタリング
+                RealmResults<Task> taskRealmResultsFiltered = mRealm.where(Task.class).equalTo("categoryId", item.getId()).sort("date", Sort.DESCENDING).findAll();
+                // 上記の結果を、TaskList としてセットする
+                mTaskAdapter.setTaskList(mRealm.copyFromRealm(taskRealmResultsFiltered));
+
             }
 
             @Override
@@ -144,28 +150,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         reloadSpinner();
-        item = (Category) mCategorySpinner.getSelectedItem();
-        if (item != null) {
-            reloadListView();
-        }
+        reloadListView();
     }
 
-    private void reloadListView(){
-        item = (Category) mCategorySpinner.getSelectedItem();
-        int categoryId = item.getId();
-
-        if (categoryId == 0) {
-            // category未入力の場合、Realmデータベースから、「全てのデータを取得して新しい日時順に並べた結果」を取得
-            RealmResults<Task> taskRealmResultsAll = mRealm.where(Task.class).sort("date", Sort.DESCENDING).findAll();
-            // 上記の結果を、TaskList としてセットする
-            mTaskAdapter.setTaskList(mRealm.copyFromRealm(taskRealmResultsAll));
-
-        } else {
-            // category入力有りの場合、該当データをフィルタリング
-            RealmResults<Task> taskRealmResultsFiltered = mRealm.where(Task.class).equalTo("categoryId", item.getId()).sort("date", Sort.DESCENDING).findAll();
-            // 上記の結果を、TaskList としてセットする
-            mTaskAdapter.setTaskList(mRealm.copyFromRealm(taskRealmResultsFiltered));
-        }
+    private void reloadListView() {
+        // category未入力の場合、Realmデータベースから、「全てのデータを取得して新しい日時順に並べた結果」を取得
+        RealmResults<Task> taskRealmResultsAll = mRealm.where(Task.class).sort("date", Sort.DESCENDING).findAll();
+        // 上記の結果を、TaskList としてセットする
+        mTaskAdapter.setTaskList(mRealm.copyFromRealm(taskRealmResultsAll));
 
         // TaskのListView用のアダプタに渡す
         mListView.setAdapter(mTaskAdapter);

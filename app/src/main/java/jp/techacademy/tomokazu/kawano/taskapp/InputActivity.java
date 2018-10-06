@@ -1,9 +1,11 @@
 package jp.techacademy.tomokazu.kawano.taskapp;
 
 import android.app.AlarmManager;
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.PendingIntent;
 import android.app.TimePickerDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -21,6 +23,7 @@ import android.widget.TimePicker;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.List;
 
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
@@ -29,16 +32,14 @@ import io.realm.Sort;
 
 public class InputActivity extends AppCompatActivity {
 
-    public final static String EXTRA_CATEGORY = "categoryId";
     private int mYear, mMonth, mDay, mHour, mMinute;
     private Button mDateButton, mTimeButton;
     private EditText mTitleEdit, mContentEdit;
     private Task mTask;
-    private Category mCategory;
-    private int mCategoryId;
     private CategoryAdapter mCategoryAdapter;
+    private List<Category> mCategoryList;
     private Spinner mCategorySpinner;
-    private Realm mRealm, mRealm1;
+    private Realm mRealm;
     private RealmChangeListener mRealmListener = new RealmChangeListener() {
         @Override
         public void onChange(Object element) {
@@ -148,11 +149,10 @@ public class InputActivity extends AppCompatActivity {
             // 更新の場合
             mTitleEdit.setText(mTask.getTitle());
             mContentEdit.setText(mTask.getContents());
-
-            Realm realm1 = Realm.getDefaultInstance();
-            mCategory = realm1.where(Category.class).equalTo("id", mCategoryId).findFirst();
-            mCategorySpinner.setSelection(mCategory.getId());
-            realm.close();
+            if (mCategoryList.contains(mTask.getCategoryId())) {
+                int i = mCategoryList.indexOf(mTask.getCategoryId());
+                mCategorySpinner.setSelection(i);
+            }
 
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(mTask.getDate());
@@ -170,7 +170,7 @@ public class InputActivity extends AppCompatActivity {
     }
 
     private void addTask() {
-        Realm realm = Realm.getDefaultInstance();
+        final Realm realm = Realm.getDefaultInstance();
 
         realm.beginTransaction();
 
@@ -198,31 +198,42 @@ public class InputActivity extends AppCompatActivity {
         try {
             Category item = (Category) mCategorySpinner.getSelectedItem();
             mTask.setCategoryId(item.getId());
-            mCategorySpinner.setSelection(mCategory.getId());
-        } catch (Exception e){
-            Log.d("NOCATEGORY", e.toString());
+//            mCategorySpinner.setSelection(item.getId());
+            GregorianCalendar calendar = new GregorianCalendar(mYear, mMonth, mDay, mHour, mMinute);
+            Date date = calendar.getTime();
+            mTask.setDate(date);
+
+            realm.copyToRealmOrUpdate(mTask);
+            realm.commitTransaction();
+
+            realm.close();
+
+            Intent resultIntent = new Intent(getApplicationContext(), TaskAlarmReceiver.class);
+            resultIntent.putExtra(MainActivity.EXTRA_TASK, mTask.getId());
+            PendingIntent resultPendingIntent = PendingIntent.getBroadcast(
+                    this,
+                    mTask.getId(),
+                    resultIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT
+            );
+
+            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+            alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), resultPendingIntent);
+
+        } catch (Exception e) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(InputActivity.this);
+            builder.setTitle("カテゴリー未入力");
+            builder.setMessage("カテゴリーは必ず選択してください。");
+            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+
+                }
+            });
+
+            AlertDialog dialog = builder.create();
+            dialog.show();
         }
-
-        GregorianCalendar calendar = new GregorianCalendar(mYear, mMonth, mDay, mHour, mMinute);
-        Date date = calendar.getTime();
-        mTask.setDate(date);
-
-        realm.copyToRealmOrUpdate(mTask);
-        realm.commitTransaction();
-
-        realm.close();
-
-        Intent resultIntent = new Intent(getApplicationContext(), TaskAlarmReceiver.class);
-        resultIntent.putExtra(MainActivity.EXTRA_TASK, mTask.getId());
-        PendingIntent resultPendingIntent = PendingIntent.getBroadcast(
-                this,
-                mTask.getId(),
-                resultIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT
-        );
-
-        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), resultPendingIntent);
     }
 
     @Override
