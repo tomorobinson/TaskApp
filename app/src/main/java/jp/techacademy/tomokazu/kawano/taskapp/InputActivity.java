@@ -32,12 +32,12 @@ import io.realm.Sort;
 
 public class InputActivity extends AppCompatActivity {
 
-    private int mYear, mMonth, mDay, mHour, mMinute;
-    private Button mDateButton, mTimeButton;
+    private int mYear, mMonth, mDay, mHour, mMinute, index;
+    private String categoryName;
+    private Button mDateButton, mTimeButton, onDoneButton;
     private EditText mTitleEdit, mContentEdit;
     private Task mTask;
     private CategoryAdapter mCategoryAdapter;
-    private List<Category> mCategoryList;
     private Spinner mCategorySpinner;
     private Realm mRealm;
     private RealmChangeListener mRealmListener = new RealmChangeListener() {
@@ -95,8 +95,23 @@ public class InputActivity extends AppCompatActivity {
     private View.OnClickListener mOnDoneClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            addTask();
-            finish();
+            if (mCategorySpinner.getSelectedItem() != null){
+                addTask();
+                finish();
+            } else {
+                AlertDialog.Builder builder = new AlertDialog.Builder(InputActivity.this);
+                builder.setTitle("カテゴリー未入力");
+                builder.setMessage("カテゴリーは必ず入力してください。");
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                });
+
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            }
+
         }
     };
 
@@ -129,6 +144,24 @@ public class InputActivity extends AppCompatActivity {
         mContentEdit = (EditText) findViewById(R.id.content_edit_text);
         mCategorySpinner = (Spinner) findViewById(R.id.category_spinner);
         mCategoryAdapter = new CategoryAdapter(InputActivity.this);
+        onDoneButton = (Button) findViewById(R.id.done_button);
+
+        // Spinnerの再読み込み
+        reloadSpinner();
+
+        // Spinner選択/未選択時の設定
+        mCategorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                categoryName = parent.getSelectedItem().toString();
+                index = position;
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
 
         // EXTRA_TASK から Task の id を取得して、 id から Task のインスタンスを取得する
         Intent intent = getIntent();
@@ -149,9 +182,12 @@ public class InputActivity extends AppCompatActivity {
             // 更新の場合
             mTitleEdit.setText(mTask.getTitle());
             mContentEdit.setText(mTask.getContents());
-            if (mCategoryList.contains(mTask.getCategoryId())) {
-                int i = mCategoryList.indexOf(mTask.getCategoryId());
-                mCategorySpinner.setSelection(i);
+
+            for (int i=0; 0 < mCategoryAdapter.getCount(); i++){
+                if (mCategoryAdapter.getItemId(i) == mTask.getCategoryId()){
+                    mCategorySpinner.setSelection(i);
+                    break;
+                }
             }
 
             Calendar calendar = Calendar.getInstance();
@@ -191,57 +227,39 @@ public class InputActivity extends AppCompatActivity {
 
         String title = mTitleEdit.getText().toString();
         String content = mContentEdit.getText().toString();
+        Category item = (Category) mCategorySpinner.getSelectedItem();
+        mTask.setCategoryId(item.getId());
 
         mTask.setTitle(title);
         mTask.setContents(content);
 
-        try {
-            Category item = (Category) mCategorySpinner.getSelectedItem();
-            mTask.setCategoryId(item.getId());
-//            mCategorySpinner.setSelection(item.getId());
-            GregorianCalendar calendar = new GregorianCalendar(mYear, mMonth, mDay, mHour, mMinute);
-            Date date = calendar.getTime();
-            mTask.setDate(date);
+        GregorianCalendar calendar = new GregorianCalendar(mYear, mMonth, mDay, mHour, mMinute);
+        Date date = calendar.getTime();
+        mTask.setDate(date);
 
-            realm.copyToRealmOrUpdate(mTask);
-            realm.commitTransaction();
+        realm.copyToRealmOrUpdate(mTask);
+        realm.commitTransaction();
 
-            realm.close();
+        realm.close();
 
-            Intent resultIntent = new Intent(getApplicationContext(), TaskAlarmReceiver.class);
-            resultIntent.putExtra(MainActivity.EXTRA_TASK, mTask.getId());
-            PendingIntent resultPendingIntent = PendingIntent.getBroadcast(
-                    this,
-                    mTask.getId(),
-                    resultIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT
-            );
+        Intent resultIntent = new Intent(getApplicationContext(), TaskAlarmReceiver.class);
+        resultIntent.putExtra(MainActivity.EXTRA_TASK, mTask.getId());
+        PendingIntent resultPendingIntent = PendingIntent.getBroadcast(
+                this,
+                mTask.getId(),
+                resultIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT
+        );
 
-            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-            alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), resultPendingIntent);
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), resultPendingIntent);
 
-        } catch (Exception e) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(InputActivity.this);
-            builder.setTitle("カテゴリー未入力");
-            builder.setMessage("カテゴリーは必ず選択してください。");
-            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-
-                }
-            });
-
-            AlertDialog dialog = builder.create();
-            dialog.show();
-        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (mTask != null) {
-            reloadSpinner();
-        }
+        reloadSpinner();
     }
 
     private void reloadSpinner() {

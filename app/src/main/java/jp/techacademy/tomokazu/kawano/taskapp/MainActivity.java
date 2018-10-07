@@ -69,11 +69,23 @@ public class MainActivity extends AppCompatActivity {
                 // 上記の結果を、TaskList としてセットする
                 mTaskAdapter.setTaskList(mRealm.copyFromRealm(taskRealmResultsFiltered));
 
+                // TaskのListView用のアダプタに渡す
+                mListView.setAdapter(mTaskAdapter);
+                // 表示を更新するために、アダプターにデータが変更されたことを知らせる
+                mTaskAdapter.notifyDataSetChanged();
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
+                // category未選択          の場合、Realmデータベースから、「全てのデータを取得して新しい日時順に並べた結果」を取得
+                RealmResults<Task> taskRealmResultsAll = mRealm.where(Task.class).sort("date", Sort.DESCENDING).findAll();
+                // 上記の結果を、TaskList としてセットする
+                mTaskAdapter.setTaskList(mRealm.copyFromRealm(taskRealmResultsAll));
 
+                // TaskのListView用のアダプタに渡す
+                mListView.setAdapter(mTaskAdapter);
+                // 表示を更新するために、アダプターにデータが変更されたことを知らせる
+                mTaskAdapter.notifyDataSetChanged();
             }
         });
 
@@ -141,28 +153,11 @@ public class MainActivity extends AppCompatActivity {
         });
 
         reloadSpinner();
-        item = (Category) mCategorySpinner.getSelectedItem();
-        if (item != null) {
-            reloadListView();
-        }
     }
 
     protected void onResume() {
         super.onResume();
         reloadSpinner();
-        reloadListView();
-    }
-
-    private void reloadListView() {
-        // category未入力の場合、Realmデータベースから、「全てのデータを取得して新しい日時順に並べた結果」を取得
-        RealmResults<Task> taskRealmResultsAll = mRealm.where(Task.class).sort("date", Sort.DESCENDING).findAll();
-        // 上記の結果を、TaskList としてセットする
-        mTaskAdapter.setTaskList(mRealm.copyFromRealm(taskRealmResultsAll));
-
-        // TaskのListView用のアダプタに渡す
-        mListView.setAdapter(mTaskAdapter);
-        // 表示を更新するために、アダプターにデータが変更されたことを知らせる
-        mTaskAdapter.notifyDataSetChanged();
     }
 
     private void reloadSpinner() {
