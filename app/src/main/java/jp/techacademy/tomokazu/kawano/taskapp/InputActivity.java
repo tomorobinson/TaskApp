@@ -43,7 +43,6 @@ public class InputActivity extends AppCompatActivity {
     private RealmChangeListener mRealmListener = new RealmChangeListener() {
         @Override
         public void onChange(Object element) {
-            reloadSpinner();
         }
     };
 
@@ -95,7 +94,7 @@ public class InputActivity extends AppCompatActivity {
     private View.OnClickListener mOnDoneClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            if (mCategorySpinner.getSelectedItem() != null){
+            if (mCategorySpinner.getSelectedItem() != null) {
                 addTask();
                 finish();
             } else {
@@ -146,9 +145,6 @@ public class InputActivity extends AppCompatActivity {
         mCategoryAdapter = new CategoryAdapter(InputActivity.this);
         onDoneButton = (Button) findViewById(R.id.done_button);
 
-        // Spinnerの再読み込み
-        reloadSpinner();
-
         // Spinner選択/未選択時の設定
         mCategorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -182,13 +178,6 @@ public class InputActivity extends AppCompatActivity {
             // 更新の場合
             mTitleEdit.setText(mTask.getTitle());
             mContentEdit.setText(mTask.getContents());
-
-            for (int i=0; 0 < mCategoryAdapter.getCount(); i++){
-                if (mCategoryAdapter.getItemId(i) == mTask.getCategoryId()){
-                    mCategorySpinner.setSelection(i);
-                    break;
-                }
-            }
 
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(mTask.getDate());
@@ -227,11 +216,12 @@ public class InputActivity extends AppCompatActivity {
 
         String title = mTitleEdit.getText().toString();
         String content = mContentEdit.getText().toString();
-        Category item = (Category) mCategorySpinner.getSelectedItem();
-        mTask.setCategoryId(item.getId());
 
         mTask.setTitle(title);
         mTask.setContents(content);
+
+        Category item = (Category) mCategorySpinner.getSelectedItem();
+        mTask.setCategoryId(item.getId());
 
         GregorianCalendar calendar = new GregorianCalendar(mYear, mMonth, mDay, mHour, mMinute);
         Date date = calendar.getTime();
@@ -260,6 +250,14 @@ public class InputActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         reloadSpinner();
+        if (mTask != null) {
+            for (int i = 0; 0 < mCategoryAdapter.getCount(); i++) {
+                if (mCategoryAdapter.getItemId(i) == mTask.getCategoryId()) {
+                    mCategorySpinner.setSelection(i);
+                    break;
+                }
+            }
+        }
     }
 
     private void reloadSpinner() {
